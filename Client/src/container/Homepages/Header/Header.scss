@@ -1,0 +1,60 @@
+.container-header {
+    width: auto;
+    height: auto;
+    margin: 10px 10px;
+
+
+    .header {
+        width: 100%;
+        height: 80px;
+        border-radius: 5px;
+        background: linear-gradient(90deg, #eaedf3, #81acd2, #63a3ed);
+        display: flex;
+        align-items: center;
+
+        .navbar-nav {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin-left: 100px;
+
+            .nav-item {
+
+                padding-left: 90px;
+                display: flex;
+                flex-direction: column;
+
+                .Logo {
+                    width: 150px;
+                    height: 80px;
+                    // margin-top: 20px;
+                    background: no-repeat center/130% url("../../../assess/image/logo.png");
+                }
+
+                .name_tag {
+                    font-size: 15px;
+                    font-weight: 500;
+                    color: white;
+                }
+
+                .name_tittle {
+                    margin-top: -10px;
+                    font-size: 10px;
+                }
+
+
+            }
+
+            .button-item {
+                width: auto;
+                display: flex;
+                align-items: center;
+                padding-left: 200px;
+
+                .btn-outline-primary {
+                    color: white;
+                }
+            }
+        }
+    }
+}
