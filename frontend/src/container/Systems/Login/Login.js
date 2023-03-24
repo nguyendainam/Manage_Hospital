@@ -9,8 +9,8 @@ export class Login extends Component {
     super(props)
     this.state = {
       isLogin: true,
-      email: '',
-      password: '',
+      email: '1111111@gmail.com',
+      password: '101101',
       errCode: false,
       message: 'aaaaaaaaaa'
     }

@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 import './Header.scss'
+
 export class Header extends Component {
   render () {
     return (

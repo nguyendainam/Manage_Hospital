@@ -5,7 +5,7 @@ const userSlices = createSlice({
   initialState: {
     accounts: {},
     userList: [],
-    isLogin: false
+    isLogin: true
   },
   reducers: {
     getUserList: (state, action) => {

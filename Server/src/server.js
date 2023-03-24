@@ -4,6 +4,9 @@ import * as dotenv from 'dotenv'
 import bodyParser from 'body-parser'
 import UserRouter from './routes/userRouter.js'
 import Systemrouter from './routes/systemRouter.js'
+import EmployeeRouter from './routes/employeeRouter.js'
+import fileupload from 'express-fileupload'
+
 const app = express()
 
 app.use(function (req, res, next) {
@@ -30,11 +33,16 @@ app.use(function (req, res, next) {
 })
 
 dotenv.config()
+app.use(fileupload({ createParentPath: true }))
+// app.use(express.static(__dirname + '/public'))
 app.use(bodyParser.json({ limit: '50mb' }))
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }))
 
+//app.use('./files', express.static('./files'))
+
 app.use(UserRouter)
 app.use(Systemrouter)
+app.use(EmployeeRouter)
 
 let PORT = process.env.PORT || 9999
 app.listen(PORT, () => {

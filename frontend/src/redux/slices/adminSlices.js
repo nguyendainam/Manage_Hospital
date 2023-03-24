@@ -1,10 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-const AdminSlices = createSlice({
+export const AdminSlices = createSlice({
   name: 'admin',
   initialState: {
-    admin: {},
-    isLogin: false
+    admin: '',
+    isLogin: false,
+    allHospitals: {}
   },
   reducers: {
     getAdminLogin: (state, action) => {
@@ -15,10 +16,19 @@ const AdminSlices = createSlice({
     },
     getAboutAdmin: (state, action) => {
       state.admin = action.payload
+    },
+    fetchAllHospitals: (state, action) => {
+      state.allHospitals = action.payload
     }
   }
 })
 
-const { actions, reducer } = AdminSlices
-export const { getAdminLogin, getAdminLogout, getAboutAdmin } = actions
-export default reducer
+// const { actions, reducer } =
+export const {
+  getAdminLogin,
+  getAdminLogout,
+  getAboutAdmin,
+  fetchAllHospitals
+} = AdminSlices.actions
+
+export default AdminSlices.reducer

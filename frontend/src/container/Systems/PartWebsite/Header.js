@@ -6,6 +6,8 @@ import {
   getAdminLogout
 } from '../../../redux/slices/adminSlices'
 
+import Navigator from '../../../components/Navigator'
+
 export class Header extends Component {
   componentDidMount () {
     this.props.getAdminLogin()
@@ -23,23 +25,20 @@ export class Header extends Component {
 
     return (
       <div className='container-header'>
+        
         <div className='form-header'>
-          <ul className='navbar-header'>
-            <li className='nav-item'>Home</li>
-            <li className='nav-item'> Pricing</li>
-            <li className='nav-item'>Pricing</li>
-            <li className='nav-item'>Disabled</li>
-          </ul>
-
           <div className='infor-header'>
             <p className='email-loggin'>{account}</p>
             <button
               type='button'
-              class='btn btn-outline-primary'
+              className='btn btn-outline-primary'
               onClick={this.handleLogout}
             >
               Logout
             </button>
+          </div>
+          <div className='navbar-header'>
+            <Navigator />
           </div>
         </div>
       </div>
