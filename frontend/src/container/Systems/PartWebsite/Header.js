@@ -12,20 +12,22 @@ export class Header extends Component {
   componentDidMount () {
     this.props.getAdminLogin()
   }
+  componentDidUpdate (prevProps) {
+    if (this.props.account !== prevProps.account) {
+    }
+  }
 
   handleLogout = () => {
     this.props.getAdminLogout()
-    console.log(this.props.account)
   }
 
   render () {
-    console.log('accout fromm header', this.props.Loggined)
-    console.log('accout fromm header', this.props.account)
-    let account = this.props.account
+    let account = this.props.account.fullName
+    let adminRoute = this.props.account.role_Account
+    // console.log('Router serverrrrrrr', this.props.routeServer)
 
     return (
       <div className='container-header'>
-        
         <div className='form-header'>
           <div className='infor-header'>
             <p className='email-loggin'>{account}</p>
@@ -38,7 +40,7 @@ export class Header extends Component {
             </button>
           </div>
           <div className='navbar-header'>
-            <Navigator />
+            <Navigator userRoute={adminRoute} />
           </div>
         </div>
       </div>
@@ -48,7 +50,8 @@ export class Header extends Component {
 
 const mapStateToProps = state => ({
   Loggined: state.admin.isLogin,
-  account: state.admin.admin
+  account: state.admin.admins,
+  routeServer: state.admin.routeServer
 })
 
 const mapDispatchToProps = { getAdminLogin, getAdminLogout }

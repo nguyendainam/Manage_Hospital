@@ -1,6 +1,10 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import { getAdminLogin, getAboutAdmin } from '../../../redux/slices/adminSlices'
+import {
+  getAdminLogin,
+  getAboutAdmin,
+  getRouteServer
+} from '../../../redux/slices/adminSlices'
 import { LogginSystem } from '../../../services/systemService'
 
 import './Login.scss'
@@ -9,6 +13,7 @@ export class Login extends Component {
     super(props)
     this.state = {
       isLogin: true,
+      // email: 'admin@gmail.com',
       email: '1111111@gmail.com',
       password: '101101',
       errCode: false,
@@ -32,8 +37,28 @@ export class Login extends Component {
     } else {
       let datasend = await LogginSystem(data)
       if (datasend.data.errCode === 0) {
-        this.props.getAdminLogin()
-        this.props.getAboutAdmin(data.email)
+        let getInfor = datasend.data.data[0]
+        if (getInfor.role_Account === 'R2' || getInfor.role_Account === 'R3') {
+          let about_admin = {
+            email: getInfor.emailUser,
+            role_Account: getInfor.role_Account,
+            id_Hospital: getInfor.id_Hospital,
+            fullName: getInfor.fullName
+          }
+          this.props.getAdminLogin()
+          this.props.getAboutAdmin(about_admin)
+          this.props.getRouteServer(getInfor.role_Account)
+        } else if (getInfor.role_Account === 'R4') {
+          let about_admin = {
+            email: getInfor.emailUser,
+            role_Account: getInfor.role_Account,
+            id_Hospital: 'ALL',
+            fullName: getInfor.fullName
+          }
+          this.props.getAdminLogin()
+          this.props.getAboutAdmin(about_admin)
+          this.props.getRouteServer(getInfor.role_Account)
+        }
       } else {
         if (datasend.data.errCode === 3) {
           this.setState({
@@ -114,6 +139,6 @@ const mapStateToProps = state => ({
   isLogin: state.admin.isLogin
 })
 
-const mapDispatchToProps = { getAdminLogin, getAboutAdmin }
+const mapDispatchToProps = { getAdminLogin, getAboutAdmin, getRouteServer }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Login)

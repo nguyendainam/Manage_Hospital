@@ -9,6 +9,8 @@ import '../../src/assess/style/system.scss'
 import ManageHospital from '../container/Systems/Hospital/ManageHospital'
 import UpdateInfor from '../container/Systems/Hospital/UpdateInfor'
 import Test from '../container/Systems/Testexample/test'
+import ListEmployee from '../container/Systems/Doctors/ListEmployee'
+import AddnewEmployee from '../container/Systems/Doctors/AddnewEmployee'
 export class Systems extends Component {
   render () {
     const isLogined = this.props.isLogined
@@ -31,6 +33,11 @@ export class Systems extends Component {
                   <Route path='/all-hospital' element={<ManageHospital />} />
                   <Route path='/update-hospital' element={<UpdateInfor />} />
                   <Route path='/test-upload' element={<Test />} />
+                  <Route path='/list-doctors' element={<ListEmployee />} />
+                  <Route
+                    path='/add-new-employee'
+                    element={<AddnewEmployee />}
+                  />
                 </Routes>
               </div>
             </div>

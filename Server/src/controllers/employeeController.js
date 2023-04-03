@@ -26,7 +26,63 @@ const logginAccout = async (req, res) => {
   }
 }
 
+const logginAccoutByRoleId = async (req, res) => {
+  try {
+    const account = await EmployeeServices.logginAccoutByRole_Service(req.body)
+    res.status(200).json(account)
+  } catch (e) {
+    res.status(200).json({
+      errCode: -1,
+      errMessage: 'Error logging in account',
+      error_is: e.message
+    })
+  }
+}
+
+const getListDoctors = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getListDoctors_Service(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from getListDoctors'
+    })
+  }
+}
+
+const createnewEmployee = async (req, res) => {
+  try {
+    let data = await EmployeeServices.createnewEmployee_Service(req)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error creating employee '
+    })
+  }
+}
+
+const updateEmployee = async (req, res) => {
+  try {
+    let data = await EmployeeServices.updateEmployee_Service(req)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from update Employee'
+    })
+  }
+}
+
 export default {
   getAllAccounts,
-  logginAccout
+  logginAccout,
+  logginAccoutByRoleId,
+  getListDoctors,
+  createnewEmployee,
+  updateEmployee
 }

@@ -1,13 +1,20 @@
-import { combineReducers, configureStore } from '@reduxjs/toolkit'
+import {
+  combineReducers,
+  configureStore,
+  getDefaultMiddleware
+} from '@reduxjs/toolkit'
 import userSlices from './slices/userSlices'
-import adminSlies from './slices/adminSlices'
+import adminSlices from './slices/adminSlices'
+import systemSlices from './slices/systemSlices'
 
 const rootReducer = combineReducers({
   user: userSlices,
-  admin: adminSlies
+  admin: adminSlices,
+  system: systemSlices
 })
 
 const store = configureStore({
-  reducer: rootReducer
+  reducer: rootReducer,
+  middleware: getDefaultMiddleware => getDefaultMiddleware()
 })
 export default store

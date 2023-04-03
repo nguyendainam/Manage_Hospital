@@ -3,9 +3,10 @@ import { createSlice } from '@reduxjs/toolkit'
 export const AdminSlices = createSlice({
   name: 'admin',
   initialState: {
-    admin: '',
+    admins: [],
     isLogin: false,
-    allHospitals: {}
+    allHospitals: {},
+    routeServer: ''
   },
   reducers: {
     getAdminLogin: (state, action) => {
@@ -15,10 +16,16 @@ export const AdminSlices = createSlice({
       state.isLogin = false
     },
     getAboutAdmin: (state, action) => {
-      state.admin = action.payload
+      return {
+        ...state,
+        admins: action.payload
+      }
     },
     fetchAllHospitals: (state, action) => {
       state.allHospitals = action.payload
+    },
+    getRouteServer: (state, action) => {
+      state.routeServer = action.payload
     }
   }
 })
@@ -28,7 +35,8 @@ export const {
   getAdminLogin,
   getAdminLogout,
   getAboutAdmin,
-  fetchAllHospitals
+  fetchAllHospitals,
+  getRouteServer
 } = AdminSlices.actions
 
 export default AdminSlices.reducer
