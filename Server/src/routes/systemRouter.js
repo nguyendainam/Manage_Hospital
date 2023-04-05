@@ -4,7 +4,7 @@ import Test from '../controllers/testController.js'
 
 const router = Router()
 
-// get request
+// HOSPITAL
 router.get('/system/get-all-hospitals', SystemsController.getallHospitals)
 router.get('/system/get-hospital-by-id', SystemsController.getHospitalById)
 router.get(
@@ -12,10 +12,19 @@ router.get(
   SystemsController.getAllSpecialHospitals
 )
 router.get('/system/get-allcode-bykey', SystemsController.getAllcodes)
-
-// post request
 router.post('/system/create-hospitals', SystemsController.createNewHospitals)
 
+// SPECIALTIES HOSPITAL
+
+router.post('/system/create-specialty', SystemsController.createNewSpecialty)
+router.get('/system/getall-specialty', SystemsController.getAllSpecialty)
+router.post('/system/update-specialty', SystemsController.updateSpecialty)
+router.put('/system/delete-specialty', SystemsController.deleteSpecialty)
+
+// CLINICS
+router.get('/system/getall-clinics', SystemsController.getAllClinics)
+router.post('/system/create-clinics', SystemsController.createNewClinics)
+router.put('/system/update-clinics', SystemsController.updateClinics)
 // testing system routes
 router.post('/system/upload-testing', Test.uploadImage)
 router.get('/system/test-getting-image', Test.getImage)

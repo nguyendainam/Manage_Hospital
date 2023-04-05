@@ -7,7 +7,11 @@ import bcrypt, { hash } from 'bcrypt'
 import e, { request } from 'express'
 const salt = bcrypt.genSaltSync(10)
 import systemServices from './systemServices.js'
-
+import * as fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 // =====================================================================
 const hashUserPassword = password => {
   return new Promise(async (resolve, reject) => {
@@ -358,7 +362,10 @@ let createnewEmployee_Service = data => {
         }
         let phone = getdata.phoneNumber
         let phoneNumber = parseInt(phone)
-        let id = await systemServices.createnewId('Employees')
+        let id = await systemServices.createnewId(
+          'Employees',
+          getdata.id_Hospital
+        )
         let fullName = getdata.fullname
         let gender = getdata.gender
         let position = getdata.position
@@ -402,6 +409,8 @@ let createnewEmployee_Service = data => {
 }
 
 let updateEmployee_Service = data => {
+  // console.log(data.body)
+
   return new Promise(async (resolve, reject) => {
     try {
       if (!data) {
@@ -411,10 +420,12 @@ let updateEmployee_Service = data => {
         })
       } else {
         let getformdata = data.body
+        let oldfileimage = getformdata.oldImage
         let filename = ''
+        let sendfile = ''
         // nếu có ảnh
         if (data.files !== null) {
-          let sendfile = await systemServices.SaveImage(
+          sendfile = await systemServices.SaveImage(
             data.files.fileimage,
             'Employees'
           )
@@ -500,10 +511,27 @@ let updateEmployee_Service = data => {
             .query(
               'UPDATE  Employees SET emailUser = @emailUser , fullName = @fullName, birthDay = @birthDay, image_Employee = @image_Employee ,phoneNumber = @phoneNumber , gender = @gender  , position = @position , address_Emp = @address_Emp WHERE id_Employee = @id_Employee '
             )
-          resolve({
-            errCode: 0,
-            errMessage: 'Update thông tin thành công'
-          })
+          if (result) {
+            if (
+              sendfile.errCode === 0 &&
+              oldfileimage !== null &&
+              oldfileimage !== filename
+            ) {
+              let newpath = __dirname + '../../../files/' + oldfileimage
+              fs.unlink(newpath, err => {
+                if (err) {
+                  console.log(err)
+                  return
+                }
+                console.log('Delete old file image successfully')
+              })
+            }
+
+            resolve({
+              errCode: 0,
+              errMessage: 'Update thông tin thành công'
+            })
+          }
         } catch (e) {
           reject(e)
         }
