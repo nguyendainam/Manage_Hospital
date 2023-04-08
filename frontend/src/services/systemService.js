@@ -36,6 +36,11 @@ export const UpdateEmployee_Services = async formData => {
   return await axios.post('/system/update-employee', formData)
 }
 
+export const getListPatients = async page => {
+  return await axios.get(`/system/users-getall?page=${page}`)
+}
+
+//////////////
 // testing....
 export const testing_upload = async formData => {
   return await axios.post('/system/upload-testing', formData)

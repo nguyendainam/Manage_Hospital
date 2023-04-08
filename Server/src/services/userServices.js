@@ -1,4 +1,8 @@
-import { getconnectData1, mssql } from '../database/dataServerTong.js'
+import {
+  getConnectServer,
+  getconnectData1,
+  mssql
+} from '../database/dataServerTong.js'
 import bcrypt from 'bcrypt'
 const salt = bcrypt.genSaltSync(10)
 
@@ -52,6 +56,28 @@ let checkEmail = email => {
           errCode: 0,
           errMessage: 'valid email'
         })
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let checkid_User = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let id = (Math.random() + 1).toString(36).substring(2)
+      let pool = await getConnectServer('ALL')
+      let result = await pool
+        .request()
+        .input('id_Patient', mssql.VarChar, id)
+        .query('SELECT id_Patient FROM Patients WHERE id_Patient = @id_Patient')
+
+      if (result.recordset.length > 0) {
+        let newid = (Math.random() + 1).toString(36).substring(2)
+        return (id = newid)
+      } else {
+        resolve({ id_Patient: id })
       }
     } catch (e) {
       reject(e)
@@ -174,9 +200,14 @@ let RegisterUsersService = data => {
             }
             let datasend = await createNewAccounts(datacreat_new_Account)
             if (datasend.errCode === 0 && datasend.roleId === 'R1') {
-              let id_Patient = (Math.random() + 1).toString(36).substring(2)
+              let getid = await checkid_User()
+              let id_Patient = ''
+              if (getid) {
+                id_Patient = getid.id_Patient
+              }
               let emailUser = data.email
-              let pool = await getconnectData1()
+              let idServer = data.idServer
+              let pool = await getConnectServer(idServer)
               let result = await pool
                 .request()
                 .input('id_Patient', mssql.VarChar, id_Patient)
@@ -197,28 +228,40 @@ let RegisterUsersService = data => {
                 errMessage: 'Successfully created new user'
               })
             }
-            // if (datasend.errCode === 0 && datasend.roleId != 'R1') {
-            //   let id_Employee = (Math.random() + 1).toString(36).substring(2)
-            //   if (!data.position) position = 'POEM2'
-            //   let emailUser = data.email
-            //   let pool = await getconnectData1()
-            //   let result = await pool
-            //     .request()
-            //     .input('id_Employee', mssql.VarChar, id_Employee)
-            //     .input('emailUser', mssql.VarChar, emailUser)
-            //     .input('fullName' ,mssql.NVarChar, data.fullname)
-            //     .input('birthDay',mssql.Date,data.birthday)
-            //     .input('image_Employee', mssql.VarChar, data.image)
-            //     .input('phoneNumber' , mssql.Int, data.phoneNumber)
-            //     .input('gender', mssql.NVarChar, data.gender)
-            //     .input('position', mssql.VarChar,data.position)
-            //     .input
+          }
+        } else if (!data.email) {
+          let id_Patient = 'error'
+          let get_id_Patient = await checkid_User()
+          if (get_id_Patient) {
+            id_Patient = get_id_Patient.id_Patient
+          }
 
-            //   resolve({
-            //     errCode: 0,
-            //     errMessage: 'Successfully created new employeee'
-            //   })
-            // }
+          let idServer = data.idServer
+          console.log(idServer)
+          let pool = await getConnectServer(idServer)
+          let result = await pool
+            .request()
+            .input('id_Patient', mssql.VarChar, id_Patient)
+            .input('name_Patient', mssql.VarChar, data.fullname)
+            .input('birthDay', mssql.Date, data.birthday)
+            .input('Address_Patient', mssql.NVarChar, data.address)
+            .input('PhoneNumber', mssql.Int, data.phoneNumber)
+            .input('gender_Patient', mssql.VarChar, data.gender)
+            .input('image_Pat', mssql.VarChar, data.image)
+            .input('Note_Patient', mssql.NText, data.note)
+            .query(
+              'INSERT INTO Patients(id_Patient, name_Patient, birthDay, Address_Patient, PhoneNumber, gender_Patient, image_Pat, Note_Patient) VALUES (@id_Patient  ,@name_Patient,@birthDay,@Address_Patient,@PhoneNumber,@gender_Patient,@image_Pat,@Note_Patient) '
+            )
+          if (result) {
+            resolve({
+              errCode: 0,
+              errMessage: 'Create patient successfully'
+            })
+          } else {
+            resolve({
+              errCode: -2,
+              errMessage: 'Create patient failed'
+            })
           }
         }
       }
@@ -228,10 +271,50 @@ let RegisterUsersService = data => {
   })
 }
 
+//  =============================SYSTEM===================================
+let GetListUsers_Service = page => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!page) {
+        page = 1
+      }
+
+      let pageNumber = page
+
+      let pageSize = 5
+      let pool = await getConnectServer('ALL')
+
+      let query = `
+      SELECT *
+      FROM (
+          SELECT ROW_NUMBER() OVER (ORDER BY id_Patient) AS row_num, *
+          FROM Patients
+      ) AS page_result
+      JOIN Allcode ON Allcode.keymap_Code = page_result.gender_Patient
+      WHERE row_num > ${(pageNumber - 1) * pageSize} AND row_num <= ${
+        pageNumber * pageSize
+      }
+  `
+      let result = await pool.query(query)
+
+      let total = await pool.query('SELECT COUNT(*) AS totalRow From Patients')
+      resolve({
+        errCode: 0,
+        errMessage: 'Get all database',
+        data: result.recordset,
+        total: total.recordset[0].totalRow
+      })
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
 export default {
   getallAccounts,
   createNewAccounts,
   LoginUsers,
   RegisterUsersService,
-  hashUserPassword
+  hashUserPassword,
+  GetListUsers_Service
 }

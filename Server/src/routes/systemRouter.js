@@ -25,6 +25,18 @@ router.put('/system/delete-specialty', SystemsController.deleteSpecialty)
 router.get('/system/getall-clinics', SystemsController.getAllClinics)
 router.post('/system/create-clinics', SystemsController.createNewClinics)
 router.put('/system/update-clinics', SystemsController.updateClinics)
+router.put('/system/delete-clinics', SystemsController.deleteClinics)
+
+// Treatment_rooms
+
+router.get('/system/getall-treatment', SystemsController.getAllTreatment)
+router.post('/system/create-treatment', SystemsController.createNewTreatment)
+router.put('/system/update-treatment', SystemsController.updateTreatment)
+
+// bed hospital
+
+router.post('/system/create-bed-hospital', SystemsController.createBedHospital)
+
 // testing system routes
 router.post('/system/upload-testing', Test.uploadImage)
 router.get('/system/test-getting-image', Test.getImage)

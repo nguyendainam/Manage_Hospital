@@ -11,6 +11,7 @@ import UpdateInfor from '../container/Systems/Hospital/UpdateInfor'
 import Test from '../container/Systems/Testexample/test'
 import ListEmployee from '../container/Systems/Doctors/ListEmployee'
 import AddnewEmployee from '../container/Systems/Doctors/AddnewEmployee'
+import GetAllPatients from '../container/Systems/Patients/getAllPatients'
 export class Systems extends Component {
   render () {
     const isLogined = this.props.isLogined
@@ -38,6 +39,7 @@ export class Systems extends Component {
                     path='/add-new-employee'
                     element={<AddnewEmployee />}
                   />
+                  <Route path='/list-patient' element={<GetAllPatients />} />
                 </Routes>
               </div>
             </div>

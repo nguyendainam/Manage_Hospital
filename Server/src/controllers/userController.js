@@ -52,9 +52,25 @@ let RegisterUsers = async (req, res) => {
   }
 }
 
+// ===========================system=====================================
+
+let getListUsers = async (req, res) => {
+  try {
+    let data = await UserServices.GetListUsers_Service(req.query.page)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Err from getListUsers'
+    })
+  }
+}
+
 export default {
   getAccounts,
   createNewAccounts,
   LoginUsers,
-  RegisterUsers
+  RegisterUsers,
+  getListUsers
 }
