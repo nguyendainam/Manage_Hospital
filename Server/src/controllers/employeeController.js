@@ -39,9 +39,9 @@ const logginAccoutByRoleId = async (req, res) => {
   }
 }
 
-const getListDoctors = async (req, res) => {
+const getListEmployee = async (req, res) => {
   try {
-    let data = await EmployeeServices.getListDoctors_Service(req.query)
+    let data = await EmployeeServices.getListEmployee_Service(req.query)
     return res.status(200).json(data)
   } catch (e) {
     console.log(e)
@@ -77,12 +77,95 @@ const updateEmployee = async (req, res) => {
     })
   }
 }
+let getListDoctor = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getListDoctor_Service(req.query.idServer)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(200).json({
+      errCode: -1,
+      errMessage: 'Error from getListdoctor'
+    })
+  }
+}
+
+let getInformations_Doctors = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getInformations_Doctors_Service(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from  getInformations_Doctors_Service'
+    })
+  }
+}
+
+let informationDoctors = async (req, res) => {
+  try {
+    let data = await EmployeeServices.informationDoctors_Service(req)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from information'
+    })
+  }
+}
+
+let getAllDoctor = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getAllDoctor_Service(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from getAllDoctor'
+    })
+  }
+}
+
+let createSchedule = async (req, res) => {
+  try {
+    let data = await EmployeeServices.createNewSchedule_Service(req.body)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from createSchedule'
+    })
+  }
+}
+
+let getScheduleDoctor = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getScheduleDoctor_Service(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from get Schedule '
+    })
+  }
+}
 
 export default {
   getAllAccounts,
   logginAccout,
   logginAccoutByRoleId,
-  getListDoctors,
+  getListEmployee,
   createnewEmployee,
-  updateEmployee
+  updateEmployee,
+  getListDoctor,
+  informationDoctors,
+  getInformations_Doctors,
+  getAllDoctor,
+  createSchedule,
+  getScheduleDoctor
 }

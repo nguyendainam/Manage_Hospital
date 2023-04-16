@@ -12,5 +12,6 @@ router.post('/register-user', userController.RegisterUsers)
 // user in admin dashboard
 
 router.get('/system/users-getall', userController.getListUsers)
+router.post('/system/users-createorupdate', userController.CreateAndUpdateUsers)
 
 export default router

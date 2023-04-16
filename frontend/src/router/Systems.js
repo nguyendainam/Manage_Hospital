@@ -12,6 +12,11 @@ import Test from '../container/Systems/Testexample/test'
 import ListEmployee from '../container/Systems/Doctors/ListEmployee'
 import AddnewEmployee from '../container/Systems/Doctors/AddnewEmployee'
 import GetAllPatients from '../container/Systems/Patients/getAllPatients'
+import ManageSpecialty from '../container/Systems/Hospital/ManageSpecialty'
+import ManageClinics from '../container/Systems/Hospital/ManageClinics'
+import ManageTreatment from '../container/Systems/Hospital/ManageTreatment'
+import InforDoctor from '../container/Systems/Doctors/UpdateInforDoctor'
+import ListDoctor from '../container/Systems/Doctors/ListDoctor'
 export class Systems extends Component {
   render () {
     const isLogined = this.props.isLogined
@@ -34,12 +39,24 @@ export class Systems extends Component {
                   <Route path='/all-hospital' element={<ManageHospital />} />
                   <Route path='/update-hospital' element={<UpdateInfor />} />
                   <Route path='/test-upload' element={<Test />} />
-                  <Route path='/list-doctors' element={<ListEmployee />} />
+                  <Route path='/list-employee' element={<ListEmployee />} />
+                  <Route path='/list-patient' element={<GetAllPatients />} />
+                  <Route path='/manage-clinics' element={<ManageClinics />} />
+                  <Route path='/infor-doctors' element={<InforDoctor />} />
+                  <Route path='/list-doctors' element={<ListDoctor />} />
+
                   <Route
                     path='/add-new-employee'
                     element={<AddnewEmployee />}
                   />
-                  <Route path='/list-patient' element={<GetAllPatients />} />
+                  <Route
+                    path='/manage-treatment'
+                    element={<ManageTreatment />}
+                  />
+                  <Route
+                    path='/manage-specialty'
+                    element={<ManageSpecialty />}
+                  />
                 </Routes>
               </div>
             </div>

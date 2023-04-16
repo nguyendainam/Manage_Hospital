@@ -56,7 +56,7 @@ let RegisterUsers = async (req, res) => {
 
 let getListUsers = async (req, res) => {
   try {
-    let data = await UserServices.GetListUsers_Service(req.query.page)
+    let data = await UserServices.GetListUsers_Service(req.query)
     return res.status(200).json(data)
   } catch (e) {
     console.log(e)
@@ -67,10 +67,24 @@ let getListUsers = async (req, res) => {
   }
 }
 
+let CreateAndUpdateUsers = async (req, res) => {
+  try {
+    let data = await UserServices.CreateAndUpdateUsers_Service(req)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Err from CreateAndUpdateUsers '
+    })
+  }
+}
+
 export default {
   getAccounts,
   createNewAccounts,
   LoginUsers,
   RegisterUsers,
-  getListUsers
+  getListUsers,
+  CreateAndUpdateUsers
 }
