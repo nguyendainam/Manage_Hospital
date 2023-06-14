@@ -2,9 +2,17 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { Link } from 'react-router-dom'
 import './Header.scss'
-
+import { getLogOutUser, getClearUser } from '../../../redux/slices/userSlices'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faUserCircle } from '@fortawesome/free-solid-svg-icons'
 export class Header extends Component {
+  handleLogOutUser = () => {
+    this.props.getLogOutUser()
+    this.props.getClearUser()
+  }
   render () {
+    let { dataUser, checkLoginUser } = this.props
+
     return (
       <>
         <div className='container-header'>
@@ -27,11 +35,33 @@ export class Header extends Component {
               </li>
 
               <li className='button-item'>
-                <Link to='/home/login'>
-                  <button type='button' className='btn btn-outline-primary'>
-                    Login
-                  </button>
-                </Link>
+                {checkLoginUser === false ? (
+                  <>
+                    <Link to='/home/login'>
+                      <button type='button' className='btn btn-outline-primary'>
+                        Đăng nhập
+                      </button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className='btn btn-primary sm '
+                      onClick={() => this.handleLogOutUser()}
+                    >
+                      Đăng Xuất
+                    </button>
+                    <Link to={`/user/${dataUser.id_Account}`}>
+                      <div style={{ paddingLeft: '20px', fontSize: '30px' }}>
+                        <FontAwesomeIcon
+                          icon={faUserCircle}
+                          size='lg'
+                          style={{ color: '#f0f2f5' }}
+                        />
+                      </div>
+                    </Link>
+                  </>
+                )}
               </li>
             </ul>
           </div>
@@ -41,8 +71,14 @@ export class Header extends Component {
   }
 }
 
-const mapStateToProps = state => ({})
+const mapStateToProps = state => ({
+  dataUser: state.user.dataUser,
+  checkLoginUser: state.user.isUserLogin
+})
 
-const mapDispatchToProps = {}
+const mapDispatchToProps = {
+  getLogOutUser,
+  getClearUser
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(Header)

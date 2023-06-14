@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { getIdDoctor_ByEmail } from '../../services/systemService'
 
 export const AdminSlices = createSlice({
   name: 'admin',
@@ -6,7 +7,8 @@ export const AdminSlices = createSlice({
     admins: [],
     isLogin: false,
     allHospitals: {},
-    routeServer: ''
+    routeServer: '',
+    idDoctor: ''
   },
   reducers: {
     getAdminLogin: (state, action) => {
@@ -26,9 +28,22 @@ export const AdminSlices = createSlice({
     },
     getRouteServer: (state, action) => {
       state.routeServer = action.payload
+    },
+
+    getIdDoctor: (state, action) => {
+      state.idDoctor = action.payload
     }
   }
 })
+
+export const fetchIdDoctor = (idServer, email) => async dispatch => {
+  const getdata = await getIdDoctor_ByEmail(idServer, email)
+  if (getdata.data.errCode === 0) {
+    dispatch(getIdDoctor(getdata.data.idDoctor))
+  } else {
+    alert('Error from fetchIdDoctor ')
+  }
+}
 
 // const { actions, reducer } =
 export const {
@@ -36,7 +51,8 @@ export const {
   getAdminLogout,
   getAboutAdmin,
   fetchAllHospitals,
-  getRouteServer
+  getRouteServer,
+  getIdDoctor
 } = AdminSlices.actions
 
 export default AdminSlices.reducer

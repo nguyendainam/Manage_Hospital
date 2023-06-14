@@ -1,10 +1,6 @@
 .containerHome {
     width: auto;
     height: auto;
-
-    .abc {
-        width: 100px;
-        height: 200px;
-        background-color: aqua;
-    }
+    display: flex;
+    flex-direction: column;
 }

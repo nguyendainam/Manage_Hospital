@@ -13,5 +13,19 @@ router.post('/register-user', userController.RegisterUsers)
 
 router.get('/system/users-getall', userController.getListUsers)
 router.post('/system/users-createorupdate', userController.CreateAndUpdateUsers)
+router.get('/system/get-patients-byid', userController.getPatientsById)
+router.get('/system/get-specialty', userController.getSpecialtyInfor)
 
+router.get('/system/get-infordoctor', userController.getInforDoctorbyId)
+router.get('/system/get-schedule-byid', userController.getScheduleById)
+router.get('/system/get-about-schedule', userController.getAboutScheduleById)
+router.get('/system/get-data-user', userController.getdataUserByAccount)
+router.get('/system/getlist-treatments', userController.getListTreatments)
+
+router.post(
+  '/system/create-request-treatment',
+  userController.createRequestTreatment
+)
+
+router.post('/system/post-update-information', userController.UpdateInformation)
 export default router

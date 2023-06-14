@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 import { v4 as uuidv4 } from 'uuid'
+import moment from 'moment/moment.js'
 // =====================================================================
 const hashUserPassword = password => {
   return new Promise(async (resolve, reject) => {
@@ -293,6 +294,7 @@ let checkEmailEmployees = email => {
 }
 
 let createnewAccount_Employee = data => {
+  console.log('data... create Account ...', data)
   return new Promise(async (resolve, reject) => {
     try {
       if (!data) {
@@ -339,6 +341,7 @@ let createnewAccount_Employee = data => {
 }
 
 let createnewEmployee_Service = data => {
+  console.log(data.body)
   return new Promise(async (resolve, reject) => {
     try {
       if (!data.body) {
@@ -352,18 +355,19 @@ let createnewEmployee_Service = data => {
           filename = ''
         if (getdata.email) {
           let checkEmail = await checkEmailEmployees(getdata.email)
-          console.log(checkEmail)
           if (checkEmail.errCode === 0) {
             let data_create_Account = {
               email: getdata.email,
               idserver: getdata.idserver,
-              role_Account: data.role_Account
+              role_Account: getdata.role_Account
             }
 
             let createAccount = await createnewAccount_Employee(
               data_create_Account
             )
-            console.log(createAccount, 'created account')
+
+            console.log(createAccount, 'created account////')
+
             if (createAccount.errCode === 0) {
               emailUser = getdata.email
             }
@@ -371,7 +375,7 @@ let createnewEmployee_Service = data => {
             emailUser = null
           }
         }
-        if (data.files.filesimage) {
+        if (data.files && data.files.filesimage && data.files !== null) {
           let saveimage = await systemServices.SaveImage(
             data.files.filesimage,
             'Employees'
@@ -382,20 +386,18 @@ let createnewEmployee_Service = data => {
           } else {
             filename = ''
           }
+        } else if (!data.files) {
+          filename = null
         }
+
+        let id = uuidv4().slice(0, 19)
         let phone = getdata.phoneNumber
-        let phoneNumber = parseInt(phone)
-        let id = await systemServices.createnewId(
-          'Employees',
-          getdata.id_Hospital
-        )
         let fullName = getdata.fullname
         let gender = getdata.gender
         let position = getdata.position
         let address = getdata.address
         let id_Hospital = getdata.id_Hospital
         let birthDay = getdata.birthDay
-
         let pool = await getConnectServer(getdata.idserver)
         let result = await pool
           .request()
@@ -404,7 +406,7 @@ let createnewEmployee_Service = data => {
           .input('fullName', mssql.NVarChar, fullName)
           .input('image_Employee', mssql.VarChar, filename)
           .input('gender', mssql.VarChar, gender)
-          .input('phoneNumber', mssql.Int, phoneNumber)
+          .input('phoneNumber', mssql.Int, phone)
           .input('position', mssql.VarChar, position)
           .input('id_Hospital', mssql.VarChar, id_Hospital)
           .input('address_Emp', mssql.NVarChar, address)
@@ -887,7 +889,6 @@ let getAllDoctor_Service = data => {
 }
 
 let createNewSchedule_Service = data => {
-  console.log(data)
   return new Promise(async (resolve, reject) => {
     try {
       if (!data.id_Doctor || !data.date) {
@@ -909,7 +910,7 @@ let createNewSchedule_Service = data => {
         let pool = await getConnectServer(idServer)
 
         if (action === 'CREATE') {
-          let id_SChedule = uuidv4().substring(20).slice(0, 20)
+          let id_SChedule = uuidv4().substring(20).slice(0, 19)
           let result = await pool
             .request()
             .input('id_SChedule', mssql.VarChar, id_SChedule)
@@ -949,7 +950,6 @@ let createNewSchedule_Service = data => {
 }
 
 let getScheduleDoctor_Service = data => {
-  console.log(data)
   return new Promise(async (resolve, reject) => {
     try {
       if (!data || !data.id_Doctor || !data.date) {
@@ -961,7 +961,7 @@ let getScheduleDoctor_Service = data => {
         let idServer = data.idServer
         let page = data.page
         if (!page) page = 1
-        let Maxlength = 6
+        let Maxlength = 3
         let date_Exam = data.date
         let id_Doctor = data.id_Doctor
         let pool = await getConnectServer(idServer)
@@ -969,11 +969,13 @@ let getScheduleDoctor_Service = data => {
           .request()
           .input('id_Doctor', mssql.VarChar, id_Doctor)
           .input('date_Exam', mssql.Date, date_Exam)
-          .query(`SELECT sc.*   FROM (SELECT ROW_NUMBER() OVER (ORDER BY  id_Schedule) AS row_num , * FROM Schedule_Dr)  AS sc
+          .query(`SELECT sc.* , Allcode.value_Code  FROM (SELECT ROW_NUMBER() OVER (ORDER BY  id_Schedule) AS row_num , * FROM Schedule_Dr WHERE  Schedule_Dr.id_Doctor = @id_Doctor AND Schedule_Dr.date_Exam = @date_Exam
+         )  AS sc
+                  JOIN Allcode ON (sc.timeType = Allcode.keymap_Code)
                   WHERE  row_num > ${(page - 1) * Maxlength} AND row_num < ${
           page * Maxlength
-        }  AND sc.id_Doctor = @id_Doctor AND sc.date_Exam = @date_Exam
-          `)
+        }    ORDER BY Allcode.value_Code
+        `)
         let result2 = await pool.query(
           `SELECT COUNT(*) as total FROM Schedule_Dr WHERE id_Doctor = '${id_Doctor}' AND date_Exam = '${date_Exam}'`
         )
@@ -999,6 +1001,1069 @@ let getScheduleDoctor_Service = data => {
   })
 }
 
+let getListDoctorBySpe_Service = data => {
+  // console.log(data)
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.id_Spe || !data.idServer) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let id_Spe = data.id_Spe
+        let page = data.page
+        if (!page) page = 1
+        let maxPage = 2
+        let pool = await getConnectServer(data.idServer)
+        let query = `SELECT table_dr.* , Clinics.name_Clinic ,Allcode.value_Code, Employees.fullName , Employees.birthDay , Employees.image_Employee  , Specialties.name_Spe FROM  
+                      (SELECT ROW_NUMBER() OVER (ORDER BY id_Doctor) AS row_num, * FROM Doctor_Infor WHERE  Doctor_Infor.id_Spe = '${id_Spe}' ) as table_dr
+                      JOIN Clinics ON (table_dr.id_Clinic = Clinics.id_Clinic)
+                      JOIN Allcode ON (table_dr.position_Dr = Allcode.keymap_Code)
+                      JOIN Employees ON (table_dr.id_Employee = Employees.id_Employee)
+                      JOIN Specialties ON (table_dr.id_Spe = Specialties.id_Spe)
+                    WHERE     (row_num > ${
+                      (page - 1) * maxPage
+                    } AND row_num <= ${page * maxPage} )   
+                      `
+        let result = await pool.query(query)
+
+        if (result.recordset.length > 0) {
+          let result2 = await pool.query(
+            `SELECT COUNT(*) AS total FROM Doctor_Infor WHERE id_Spe ='${id_Spe}'`
+          )
+          resolve({
+            errCode: 0,
+            errMessage: 'Get data successfully ',
+            data: result.recordset,
+            total: result2.recordset[0].total
+          })
+        } else if (result.recordset.length === 0) {
+          resolve({
+            errCode: 2,
+            errMessage: 'Get data failed',
+            data: []
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getAllSchedulebyDate_Server = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.id_Doctor || !data.date) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let id_Doctor = data.id_Doctor
+        let date_Exam = data.date
+        let pool = await getConnectServer(idServer)
+        let result = await pool
+          .request()
+          .input('id_Doctor', mssql.VarChar, id_Doctor)
+          .input('date_Exam', mssql.Date, date_Exam)
+          .query(`SELECT SC.* , Allcode.value_Code FROM  Schedule_Dr as SC 
+                  JOIN Allcode ON (Allcode.keymap_Code = SC.timeType )
+                  WHERE SC.id_Doctor = @id_Doctor AND  SC.date_Exam = @date_Exam
+                  ORDER BY Allcode.value_Code  
+          `)
+        // console.log(result)
+        if (result.recordset.length > 0) {
+          resolve({
+            errCode: 0,
+            errMessage: 'Get Schedule successfull',
+            data: result.recordset
+          })
+        } else if (result.recordset.length === 0) {
+          resolve({
+            errCode: 2,
+            errMessage: 'Data empty or not found',
+            data: []
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let createNewBooking_Service = data => {
+  console.log(data)
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (
+        !data.idPatient ||
+        !data.idDoctor ||
+        !data.idSchedule ||
+        !data.timeType ||
+        !data.date
+      ) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let id_Patient = data.idPatient
+        let id_Doctor = data.idDoctor
+        let id_Schedule = data.idSchedule
+        let date_Exam = data.date
+        let timeType = data.timeType
+        let status_Booking = 'STB1'
+        let getStringRandom = Math.random().toString(32).slice(2)
+        let id_Booking = (Date.now() + getStringRandom).slice(0, 19)
+        let token = uuidv4()
+        let pool = await getConnectServer(data.idServer)
+
+        let result = await pool
+          .request()
+          .input('id_Booking', mssql.VarChar, id_Booking)
+          .input('id_Patient', mssql.VarChar, id_Patient)
+          .input('id_Schedule', mssql.VarChar, id_Schedule)
+          .input('id_Doctor', mssql.VarChar, id_Doctor)
+          .input('date_Exam', mssql.Date, date_Exam)
+          .input('timeType', mssql.VarChar, timeType)
+          .input('token', mssql.VarChar, token)
+          .input('status_Booking', mssql.VarChar, status_Booking)
+          .query(
+            `INSERT INTO Bookings (id_Booking ,  id_Patient , id_Schedule ,id_Doctor,  date_Exam ,timeType ,status_Booking , token)  SELECT @id_Booking as id_Booking ,@id_Patient as  id_Patient , @id_Schedule as id_Schedule , @id_Doctor as id_Doctor , @date_Exam as date_Exam , @timeType as timeType , @status_Booking as status_Booking ,  @token as token
+            WHERE NOT EXISTS (SELECT * FROM Bookings WHERE id_Patient = @id_Patient AND  date_Exam =@date_Exam AND id_Doctor = @id_Doctor)`
+          )
+        let result1 = await pool.query(
+          `UPDATE  Schedule_Dr SET currentNumber = currentNumber + 1 WHERE id_Schedule = '${id_Schedule}' AND currentNumber < Schedule_Dr.currentMax`
+        )
+
+        console.log(result1)
+        console.log(result)
+
+        if (result.rowsAffected[2] === 0) {
+          resolve({
+            errMessage: 'Đặt Không Thành Công',
+            errCode: 2
+          })
+          let result2 = await pool.query(
+            `UPDATE  Schedule_Dr SET currentNumber = currentNumber - 1 WHERE id_Schedule = '${id_Schedule}' AND currentNumber < Schedule_Dr.currentMax `
+          )
+        }
+        if (result.rowsAffected[2] === 1 && result1.rowsAffected[3] === 1) {
+          if (
+            data.email &&
+            data.address &&
+            data.selectedGender &&
+            data.birthday
+          ) {
+            let updateInforPatient = await pool
+              .request()
+              .input('emailUser', mssql.VarChar, data.email)
+              .input('birthDay', mssql.Date, data.birthday)
+              .input('gender_Patient', mssql.VarChar, data.selectedGender)
+              .input('address', mssql.NVarChar, data.address)
+              .input('Note_Patient', mssql.NText, data.note)
+              .input('phoneNumber', mssql.Int, data.phoneNumber)
+              .input('id_Patient', mssql.VarChar, id_Patient)
+              .query(`UPDATE  Patients 
+                      SET 
+                      birthDay = @birthDay ,
+                      Address_Patient = @address,
+                      PhoneNumber = @phoneNumber ,
+                      gender_Patient= @gender_Patient,
+                      Note_Patient = @Note_Patient 
+                      WHERE  id_Patient = @id_Patient AND emailUser = @emailUser `)
+          }
+
+          resolve({
+            errMessage: 'Đặt Thành Công',
+            errCode: 0
+          })
+        } else if (
+          result.rowsAffected[2] === 1 &&
+          result1.rowsAffected[3] === 0
+        ) {
+          let result3 = await pool.query(
+            `DELETE FROM Bookings WHERE id_Booking = '${id_Booking}' `
+          )
+          console.log(result3)
+          resolve({
+            errCode: 3,
+            errMessage: 'Số lượng đầy'
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getAllBooking_Services = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.date) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let date = data.date
+        let page = data.page
+        if (!page) page = 1
+        let MaxPage = 10
+        let query = `SELECT B.* , Patients.name_Patient  , D.id_Employee ,Allcode.value_Code  ,E.fullName , A.value_Code AS time 
+                    FROM (SELECT ROW_NUMBER() OVER (ORDER BY  id_Schedule ) AS row_num , * FROM  Bookings WHERE  Bookings.date_Exam = '${date}')AS B
+                    JOIN Patients ON (Patients.id_Patient = B.id_Patient)
+                    JOIN Doctor_Infor  as D ON (D.id_Doctor = B.id_Doctor)
+                    JOIN Employees AS E ON (E.id_Employee =  D.id_Employee)
+                    JOIN Allcode  ON (Allcode.keymap_Code = B.status_Booking)
+                    RIGHT JOIN ALLcode as A ON (A.keymap_Code = B.timeType)
+                    WHERE row_num > ${(page - 1) * MaxPage} AND  row_num < ${
+          page * MaxPage
+        }   
+        `
+
+        let pool = await getConnectServer(idServer)
+
+        let result = await pool.query(query)
+        let result1 = await pool.query(
+          `SELECT COUNT(*) as total FROM Bookings WHERE date_Exam = '${date}' `
+        )
+        if (result) {
+          resolve({
+            errCode: 0,
+            errMessage: 'Get data successfully',
+            data: result.recordset,
+            total: result1.recordset[0].total
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let comfirmBooking_Services = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.token) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let token = data.token
+        let idServer = data.idServer
+
+        let pool = await getConnectServer(idServer)
+        let result = await pool.query(
+          `UPDATE Bookings  SET status_Booking = 'STB2' WHERE token = '${token}' AND status_Booking = 'STB1'`
+        )
+
+        if (result.rowsAffected[2] === 1) {
+          resolve({
+            errCode: 0,
+            errMessage: 'Update status_Booking successfully '
+          })
+        } else if (result.rowsAffected[2] === 0) {
+          resolve({
+            errCode: 1,
+            errMessage: 'Update status_Booking failed '
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getAllPatientBooking_Services = data => {
+  console.log(data)
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.idSchedule) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let id_Schedule = data.idSchedule
+        let page = data.page
+        if (!page) page = 1
+        let maxPage = 20
+        let pool = await getConnectServer(idServer)
+        let query = `SELECT B.*  , P.name_Patient , P.birthDay , P.Address_Patient, P.PhoneNumber ,P.Note_Patient , AP.value_Code as gender,  AB.value_Code as Status FROM (SELECT ROW_NUMBER () OVER (ORDER BY id_Booking) as row_num, * FROM  Bookings  WHERE id_Schedule = '${id_Schedule}' AND status_Booking ='STB2')  as B
+              JOIN Patients as P ON (P.id_Patient = B.id_Patient)
+              JOIN Allcode as AP ON (AP.keymap_Code = P.gender_Patient)
+              JOIN Allcode as AB ON (AB.keymap_Code = B.status_Booking)
+            WHERE  row_num > ${(page - 1) * maxPage} AND row_num < ${
+          page * maxPage
+        }
+        `
+        let result = await pool.query(query)
+        let result2 = await pool.query(
+          `SELECT COUNT(*) AS total FROM Bookings WHERE id_Schedule = '${id_Schedule}'`
+        )
+
+        if (result) {
+          resolve({
+            errCode: 0,
+            errMessage: 'Get Data successfully',
+            data: result.recordset,
+            total: result2.recordset[0].total
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let createNewPatientInfor_Services = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.idPatient || !data) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let idDoctor = data.idDoctor
+        let idPatient = data.idPatient
+        let id_Hospital = data.idHospital
+        let reasonPatient = data.reasonPatient
+        let treatment_process = data.treatmentProcess
+        let patient_history = data.patient_history
+        let medical_infor = data.medical_infor
+        let treatment_day = data.treatment_day
+        let treatment_end = data.treatment_end
+
+        let pool = await getConnectServer(idServer)
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getAllDoctorBySpe_Services = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data || !data.id_Spe) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing dataa required'
+        })
+      } else {
+        let idServer = data.idServer
+        let idSpe = data.id_Spe
+        let pool = await getConnectServer(idServer)
+        let result =
+          await pool.query(`SELECT   D.id_Doctor , E.fullName  FROM Doctor_Infor AS D 
+                          JOIN Employees as E ON (E.id_Employee = D.id_Employee)
+                            WHERE D.id_Spe = '${idSpe}'
+      `)
+
+        if (result) {
+          resolve({
+            errCode: 0,
+            errMessage: 'Get data successfully',
+            data: result.recordset
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let PatientTreatment_Services = data => {
+  console.log(data)
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.idPatient || !data.id_Bed) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required '
+        })
+      } else {
+        let id_Bed = data.id_Bed
+        let id_Patient = data.idPatient
+        let id_Doctor = data.idDoctor
+        let idServer = data.idServer
+        let id_Hospital = data.idHospital
+        let reason_Patient = data.reason_Patient
+        let treatment_process = data.treatment_Patient
+        let patient_history = data.patient_history
+        let medical_infor = ''
+        let treatment_day = data.dateStart
+        let treatment_end = data.dateEnd
+        let id_Pat = data.id_Pat
+        let patient_status = 'PST1'
+        let pool = await getConnectServer(idServer)
+        if (data.action === 'x') {
+          if (!id_Pat || id_Pat === undefined || id_Pat === null) {
+            let today = Date.now()
+            let id_Infor_Pat = (uuidv4() + today).substring(24).slice(0, 19)
+            let result = await pool
+              .request()
+              .input('id_Infor_Pat', mssql.VarChar, id_Infor_Pat)
+              .input('id_Patient', mssql.VarChar, id_Patient)
+              .input('id_Hospital', mssql.VarChar, id_Hospital)
+              .input('id_Doctor', mssql.VarChar, id_Doctor)
+              .input('reason_Patient', mssql.NText, reason_Patient)
+              .input('treatment_process', mssql.NText, treatment_process)
+              .input('patient_history', mssql.NText, patient_history)
+              .input('medical_infor', mssql.NText, medical_infor)
+              .input('treatment_day', mssql.Date, treatment_day)
+              .input('treatment_end', mssql.Date, treatment_end)
+              .input('patient_status', mssql.VarChar, patient_status)
+              .query(`INSERT INTO Infor_About_Patient (id_Infor_Pat ,  id_Patient , id_Hospital, id_Doctor , reason_Patient , 
+                treatment_process , patient_history , medical_infor ,  treatment_day  , treatment_end , patient_status)  
+                SELECT * FROM
+                (SELECT @id_Infor_Pat as id_Infor_Pat , @id_Patient as id_Patient , @id_Hospital as id_Hospital ,  @id_Doctor as id_Doctor ,@reason_Patient as reason_Patient , @treatment_process as treatment_process , @patient_history as patient_history , @medical_infor as medical_infor ,  @treatment_day as treatment_day , @treatment_end as treatment_end , @patient_status as patient_status
+                  ) as tmp WHERE NOT EXISTS (SELECT * FROM Infor_About_Patient WHERE  id_Patient = @id_Patient)
+  
+              `)
+            console.log(result)
+            if (result.rowsAffected[2] === 0) {
+              resolve({
+                errCode: 2,
+                errMessage: 'Patient information already exists'
+              })
+            } else {
+              let result2 = await pool.query(
+                `UPDATE Hospital_Bed SET id_Infor_Pat = '${id_Infor_Pat}' , status_Bed = 'ST2' WHERE status_Bed = 'ST1' AND id_Bed = '${id_Bed}'`
+              )
+              resolve({
+                errCode: 0,
+                errMessage: 'Tạo Thông tin thành công '
+              })
+            }
+          } else if (id_Pat !== null || id_Pat !== '') {
+            let patient_status = 'PST1'
+            let result1 = await pool
+              .request()
+              .input('id_Infor_Pat', mssql.VarChar, id_Pat)
+              .input('id_Patient', mssql.VarChar, id_Patient)
+              .input('id_Hospital', mssql.VarChar, id_Hospital)
+              .input('id_Doctor', mssql.VarChar, id_Doctor)
+              .input('reason_Patient', mssql.NText, reason_Patient)
+              .input('treatment_process', mssql.NText, treatment_process)
+              .input('patient_history', mssql.NText, patient_history)
+              .input('medical_infor', mssql.NText, medical_infor)
+              .input('treatment_day', mssql.Date, treatment_day)
+              .input('treatment_end', mssql.Date, treatment_end)
+              .input('patient_status', mssql.VarChar, patient_status)
+              .query(`UPDATE Infor_About_Patient SET id_Hospital = @id_Hospital, id_Doctor =@id_Doctor, reason_Patient = @reason_Patient, treatment_process =@treatment_process, patient_history = @patient_history, medical_infor = @medical_infor,  treatment_day =@treatment_day  , treatment_end =@treatment_end
+            WHERE  id_Infor_Pat =@id_Infor_Pat
+          `)
+            if (result1) {
+              let result3 = await pool.query(
+                `UPDATE Hospital_Bed SET id_Infor_Pat = '${id_Pat}' , status_Bed = 'ST2' WHERE status_Bed = 'ST1' AND id_Bed = '${id_Bed}'`
+              )
+              resolve({
+                errCode: 0,
+                errMessage: 'Update successful'
+              })
+            }
+          }
+        }
+        if (data.action === 'UPDATE') {
+          console.log(data)
+
+          let result = await pool
+            .request()
+            .input('id_Infor_Pat', mssql.VarChar, id_Pat)
+            .input('reason_Patient', mssql.NText, reason_Patient)
+            .input('patient_history', mssql.NText, patient_history)
+            .input('treatment_day', mssql.Date, treatment_day)
+            .input('treatment_end', mssql.Date, treatment_end).query(`
+              UPDATE Infor_About_Patient SET reason_Patient = @reason_Patient , patient_history = @patient_history ,treatment_day =@treatment_day , treatment_end = @treatment_end WHERE id_Infor_Pat = @id_Infor_Pat
+            `)
+
+          if (result.rowsAffected[2] === 1) {
+            resolve({
+              errCode: 0,
+              errMessage: 'Update thành công'
+            })
+          } else if (result.rowsAffected[2] === 0) {
+            resolve({
+              errCode: 2,
+              errMessage: 'Update failed '
+            })
+          }
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getInformations_Pat_Services = data => {
+  console.log(data)
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.id_Infor_Pat) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required '
+        })
+      } else {
+        let idServer = data.idServer
+        let id_Infor_Pat = data.id_Infor_Pat
+        let pool = await getConnectServer(idServer)
+        let id_Hospital = data.id_Hospital
+        let query = `SELECT * FROM Infor_About_Patient WHERE id_Infor_Pat = '${id_Infor_Pat}' AND 
+        (id_Hospital = '${id_Hospital}' OR id_Hospital IS NULL)`
+        let result = await pool.query(query)
+        console.log(result.rowsAffected[0] === 1)
+        if (result) {
+          resolve({
+            errCode: 0,
+            errMessage: 'Get data successfully',
+            data: result.recordset
+          })
+        } else if (result.rowsAffected[0] === 0) {
+          resolve({
+            errCode: 2,
+            errMessage: 'Get data failed or not found',
+            data: result.recordset[0]
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getStatusPatient_Services = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.idPatient) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let idPatient = data.idPatient
+        let pool = await getConnectServer(idServer)
+        // KIỂM TRA ĐÃ CÓ THÔNG TIN BỆNH NHÂN CHƯA
+        let result = await pool.query(
+          `SELECT * FROM Infor_About_Patient WHERE  id_Patient =  '${idPatient}'`
+        )
+        if (result.rowsAffected[0] === 0) {
+          resolve({
+            errCode: 3,
+            errMessage: 'Patient  has not  information'
+          })
+        }
+        if (result.rowsAffected[0] === 1) {
+          let data = result.recordset[0]
+          if (data.patient_status === 'PST1') {
+            resolve({
+              errCode: 2,
+              errMessage: ' Patient is in treatment'
+            })
+          } else if (data.patient_status === 'PST2') {
+            resolve({
+              errCode: 0,
+              errMessage: 'GET information for patient successfully',
+              data: data
+            })
+          }
+        }
+        resolve({
+          data: result.recordset[0]
+        })
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+let FinishTreatment_Services = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.idBed || !data.id_Infor_Pat) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required for treatment'
+        })
+      } else {
+        let idServer = data.idServer
+        let id_Infor_Pat = data.id_Infor_Pat
+        let id_Bed = data.idBed
+        let id_Hospital = data.idHospital
+
+        let pool = await getConnectServer(idServer)
+        let query = `UPDATE Hospital_Bed 
+                    SET id_Infor_Pat = NULL  , status_Bed = 'ST1'
+                    WHERE id_Bed = '${id_Bed}'AND id_Infor_Pat = '${id_Infor_Pat}'
+        `
+        let result = await pool.query(query)
+        if (result.rowsAffected[2] === 1) {
+          console.log(id_Infor_Pat)
+          let query1 = `UPDATE Infor_About_Patient 
+        SET  
+        reason_Patient = NULL ,
+        treatment_process = NULL  ,
+        treatment_day = NULL ,
+        treatment_end =  NULL , 
+        patient_status = 'PST2'  ,
+        id_Hospital = NULL  
+        WHERE  Infor_About_Patient.id_Infor_Pat = '${id_Infor_Pat}'`
+
+          let result2 = await pool.query(query1)
+          console.log(result2)
+          if (result2.rowsAffected[3] === 1) {
+            resolve({
+              errCode: 0,
+              errMessage: 'Update successful'
+            })
+          } else if (result2.rowsAffected[3] === 0) {
+            resolve({
+              errCode: 2,
+              errMessage: 'Update failed'
+            })
+          }
+        }
+      }
+    } catch (e) {
+      console.log(e)
+    }
+  })
+}
+
+let getListPATtreatment_Services = data => {
+  console.log(data)
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.idHospital) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let id_Hospital = data.idHospital
+        let page = data.page || 1
+        let MaxPage = 10
+        let pool = await getConnectServer(idServer)
+        let query = `
+    SELECT 
+        PAT.reason_Patient as reason,
+        PAT.treatment_day as dateStart,
+        PAT.treatment_end as dateEnd, 
+        P.name_Patient  as name,
+        P.birthDay as birthDay,
+        A.value_Code as genderPatient,
+        SPE.name_Spe as nameSpe ,
+        TR.Name_Treat as nameRoom
+    FROM  (
+        SELECT 
+            ROW_NUMBER() OVER (ORDER BY id_Patient) as rownum, 
+            *  
+        FROM Infor_About_Patient 
+        WHERE 
+            id_Hospital = '${id_Hospital}'
+            AND patient_status ='PST1'
+    ) as PAT
+    JOIN Patients as P ON (P.id_Patient = PAT.id_Patient)
+    JOIN Allcode as A ON (A.keymap_Code = P.gender_Patient)
+    JOIN Hospital_Bed AS HB ON (HB.id_Infor_Pat = PAT.id_Infor_Pat)
+    JOIN Treatment_rooms as TR ON (TR.id_Room = HB.id_Room)
+    JOIN Specialties as SPE ON (SPE.id_Spe = TR.id_Spe)
+    WHERE rownum > ${(page - 1) * MaxPage} AND rownum <= ${page * MaxPage}
+  `
+
+        let result = await pool.query(query)
+        let result2 = await pool.query(
+          `SELECT COUNT(*)  as total FROM  Infor_About_Patient WHERE  id_Hospital = '${id_Hospital}' `
+        )
+
+        if (result) {
+          resolve({
+            errCode: 0,
+            errMessage: 'Get Data successfully',
+            data: result.recordset,
+            total: result2.recordset[0].total
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getAllInforDr_Services = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.emailUser) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let emailUser = data.emailUser
+
+        let pool = await getConnectServer(idServer)
+        let query = `SELECT E.fullName , E.image_Employee , D.id_Doctor as id_Doctor ,A.value_code as degree ,
+        S.name_Spe  as Specialty ,C.name_Clinic  as Clinics
+        
+        FROM 
+                  (SELECT * FROM Employees WHERE emailUser = '${emailUser}') as E
+                  JOIN Doctor_Infor AS D ON (D.id_Employee = E.id_Employee)
+                  JOIN Allcode AS A ON (A.keymap_Code = D.position_Dr)
+                  JOIN Specialties AS S ON ( S.id_Spe = D.id_Spe)
+                  JOIN Clinics AS C ON (C.id_Clinic = D.id_Clinic)
+
+
+
+        `
+        let result = await pool.query(query)
+        if (result) {
+          resolve({
+            errCode: 0,
+            data: result.recordset
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let createNewHistories_Service = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.body) {
+        resolve('Missing data required')
+      } else {
+        let id_History = uuidv4().substring(20).slice(0, 19)
+        let getData = data.body
+        let id_Booking = getData.id_Booking
+        let id_Patient = getData.id_Patient
+        let id_Doctor = getData.id_Doctor
+        let note = getData.textaboutExa
+        let idServer = getData.idServer
+        let filename = ''
+        if (data.files || data.files !== null || data.files.fileImage) {
+          let saveImage = await systemServices.SaveImage(
+            data.files.fileImage,
+            'History'
+          )
+          if (saveImage.errCode === 0) {
+            filename = `History/${saveImage.filename}`
+          } else {
+            filename = NULL
+          }
+        } else {
+          filename = NULL
+        }
+        let pool = await getConnectServer(idServer)
+
+        let result = await pool
+          .request()
+          .input('id_History', mssql.VarChar, id_History)
+          .input('id_Booking', mssql.VarChar, id_Booking)
+          .input('id_Patient', mssql.VarChar, id_Patient)
+          .input('id_Doctor', mssql.VarChar, id_Doctor)
+          .input('note', mssql.NText, note)
+          .input('file_exam', mssql.NText, filename)
+          .query(`INSERT INTO Histories (id_History , id_Booking, id_Patient ,id_Doctor , note , file_exam) 
+          VALUES (@id_History , @id_Booking , @id_Patient , @id_Doctor, @note , @file_exam)`)
+
+        if (result) {
+          console.log(id_Booking)
+          let query = `UPDATE Bookings SET status_Booking = 'STB3' WHERE id_Booking = '${id_Booking}' `
+          let result1 = await pool.query(query)
+          if (result1) {
+            resolve({
+              errCode: 0,
+              errMessage: 'Create History successfully'
+            })
+          }
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getAllSheduleByDr_Service = data => {
+  console.log(data)
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data || !data.idDoctor) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let pool = await getConnectServer(idServer)
+        let page = data.page
+        if (!page) page = 1
+        let maxPage = 10
+        let idDoctor = data.idDoctor
+        let date = new Date(data.dateExam)
+        let result = await pool.request().input('dateExam', mssql.Date, date)
+          .query(`SELECT row_number.* , B.date_Exam , P.name_Patient ,  P.birthDay , A.value_Code , C.value_Code as Status , D.value_Code as Time  FROM (SELECT ROW_NUMBER() OVER (ORDER BY  id_History) as row , * FROM Histories WHERE id_Doctor = '${idDoctor}') as row_number 
+        JOIN  Bookings as B ON row_number.id_Booking = B.id_Booking
+        JOIN  Patients as P ON row_number.id_Patient = P.id_Patient
+        JOIN  Allcode as A ON P.gender_Patient = A.keymap_Code 
+        JOIN Allcode as C ON B.status_Booking = C.keymap_Code
+        JOIN Allcode as D ON B.timeType = D.keymap_Code
+
+        WHERE B.date_Exam = @dateExam AND  row_number.row > ${
+          (page - 1) * maxPage
+        } AND row_number.row < ${page * maxPage}
+       `)
+
+        if (result.rowsAffected[0] === 1) {
+          resolve({
+            errCode: 0,
+            errMessage: 'Get data successfully',
+            data: result.recordset
+          })
+        } else if (result.rowsAffected[0] === 0) {
+          resolve({
+            errCode: 2,
+            errMessage: 'Data empty'
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getIdDoctorByEmail_Service = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.email) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let pool = await getConnectServer(idServer)
+        let emailDoctor = data.email
+        let result = await pool.request().query(
+          `SELECT  D.id_Doctor AS id_Doctor FROM  Employees 
+            JOIN Doctor_Infor as D ON Employees.id_Employee = D.id_Employee
+            WHERE emailUser = '${emailDoctor}'`
+        )
+        if (result.rowsAffected[0] === 1) {
+          resolve({
+            errCode: 0,
+            errMessage: 'Get Id successfull',
+            idDoctor: result.recordset[0].id_Doctor
+          })
+        } else if (result.rowsAffected[0] === 0) {
+          resolve({
+            errCode: 2,
+            errMessage: 'Email not found'
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getRequestTreat_Service = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Mising data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let pool = await getConnectServer(idServer)
+        let query = ''
+        if (data.date === 'ALL') {
+          query = `SELECT T.*, P.emailUser, P.name_Patient, P.birthDay, P.Address_Patient, P.PhoneNumber ,P.Note_Patient, P.image_Pat, A.value_Code as gender, A1.value_Code as status
+          FROM Request_Treatment AS T
+          JOIN Patients AS P ON P.id_Patient = T.id_Patient
+          JOIN Allcode as A ON A.keymap_Code = P.gender_Patient
+          JOIN Allcode as A1 ON A1.keymap_Code = T.Status_Request`
+        } else {
+          let date = moment(data.date).format('YYYY-MM-DD')
+          query = `SELECT T.*, P.emailUser, P.name_Patient, P.birthDay, P.Address_Patient, P.PhoneNumber, P.image_Pat, P.Note_Patient, A.value_Code as gender, A1.value_Code as status
+                   FROM Request_Treatment AS T
+                   JOIN Patients AS P ON P.id_Patient = T.id_Patient
+                   JOIN Allcode as A ON A.keymap_Code = P.gender_Patient
+                   JOIN Allcode as A1 ON A1.keymap_Code = T.Status_Request
+                   WHERE T.dateSchedule = '${date}'`
+        }
+
+        let result = await pool.query(query)
+        if (result) {
+          resolve({
+            errCode: 0,
+            errMessage: 'Get data successfully',
+            data: result.recordset
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let getConfirmRequest_Service = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.idServer || !data.RequestId) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        let idServer = data.idServer
+        let idRequest = data.RequestId
+        let action = data.action
+        let pool = await getConnectServer(idServer)
+        let query = ''
+        if (action === 'CONFIRM') {
+          query = `UPDATE Request_Treatment SET  Status_Request = 'STB2' WHERE RequestId = '${idRequest}'`
+        } else if (action === 'CANCEL') {
+          query = `UPDATE Request_Treatment SET  Status_Request = 'STB4' WHERE RequestId = '${idRequest}'`
+        }
+        let result = await pool.query(query)
+        if (result.rowsAffected[3] === 1) {
+          resolve({
+            errCode: 0,
+            errMessage: 'UPDATE SUCCESSFULL'
+          })
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+let createTreatmentsPatient_Service = data => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing data required'
+        })
+      } else {
+        console.log(data, 'data')
+        let id_Hospital = data.id_Hospital
+        let id_Patient = data.id_Patient
+        let id_Bed = data.id_Bed
+        let treatment_day = moment(data.treatment_day).format('YYYY-MM-DD')
+        let reason_Patient = data.reason_Patient
+        // KIỂM TRA ID PATIENT
+
+        let pool = await getConnectServer(id_Hospital)
+
+        let queryCheck = `SELECT * FROM  Infor_About_Patient WHERE id_Patient = '${id_Patient}'`
+        let checkPatient = await pool.query(queryCheck)
+
+        if (checkPatient.rowsAffected[0] === 0) {
+          let id_Infor_Pat = uuidv4().toString().slice(0, 19)
+          let status = 'PST1'
+          let result = await pool
+            .request()
+            .input('id_Infor_Pat', mssql.VarChar, id_Infor_Pat)
+            .input('id_Patient', mssql.VarChar, id_Patient)
+            .input('id_Hospital', mssql.VarChar, id_Hospital)
+            .input('reason_Patient', mssql.NText, reason_Patient)
+            .input('treatment_day', mssql.NText, treatment_day)
+            .input('patient_status', mssql.VarChar, status)
+            .query(
+              `INSERT INTO Infor_About_Patient (id_Infor_Pat,  id_Patient , id_Hospital , reason_Patient , treatment_day ,patient_status) VALUES (@id_Infor_Pat,  @id_Patient , @id_Hospital , @reason_Patient , @treatment_day ,@patient_status) `
+            )
+          if (result) {
+            let query = `UPDATE Hospital_Bed SET id_Infor_Pat ='${id_Infor_Pat}' ,  status_Bed = 'ST2'
+            WHERE id_Bed ='${id_Bed}'
+            `
+            let result2 = await pool.query(query)
+            if (result2) {
+              let result3 = await pool.query(
+                `UPDATE Request_Treatment SET Status_Request ='STB5' WHERE id_Patient ='${id_Patient}' AND dateSchedule = '${treatment_day}' `
+              )
+              resolve({
+                errCode: 0,
+                errMessage: 'Create successful'
+              })
+            }
+          }
+        } else if (checkPatient.rowsAffected[0] === 1) {
+          console.log('bệnh nhân đã có thông tin')
+          // LẤY INFOR CỦA PATIENTS
+          let idInforPat = checkPatient.recordset[0].id_Infor_Pat
+          let status = checkPatient.recordset[0].patient_status
+
+          if (status === 'PST1') {
+            resolve({
+              errCode: 2,
+              errMessage: 'Bệnh nhân đang điều trị'
+            })
+          } else if (status === 'PST2') {
+            let query = `UPDATE Infor_About_Patient SET id_Hospital = '${id_Hospital}', reason_Patient = '${reason_Patient}',
+            treatment_day = '${treatment_day}', patient_status = 'PST1'
+            WHERE id_Infor_Pat = '${idInforPat}'
+            `
+
+            let query1 = `UPDATE Hospital_Bed SET id_Infor_Pat = '${idInforPat}', status_Bed = 'ST2'
+            WHERE id_Bed = '${id_Bed}'
+            `
+
+            let result = await pool.query(query)
+            if (result) {
+              let result1 = await pool.query(query1)
+              if (result1) {
+                let result3 = await pool.query(
+                  `UPDATE Request_Treatment SET Status_Request ='STB5' WHERE id_Patient ='${id_Patient}' AND dateSchedule = '${treatment_day}' `
+                )
+                resolve({
+                  errCode: 0,
+                  errMessage: 'Create successful'
+                })
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
 export default {
   getAllAccountsServices,
   logginAccountServices,
@@ -1012,5 +2077,25 @@ export default {
   updateInforDoctors,
   getAllDoctor_Service,
   createNewSchedule_Service,
-  getScheduleDoctor_Service
+  getScheduleDoctor_Service,
+  getListDoctorBySpe_Service,
+  getAllSchedulebyDate_Server,
+  createNewBooking_Service,
+  getAllBooking_Services,
+  comfirmBooking_Services,
+  getAllPatientBooking_Services,
+  createNewPatientInfor_Services,
+  getAllDoctorBySpe_Services,
+  PatientTreatment_Services,
+  getInformations_Pat_Services,
+  getStatusPatient_Services,
+  FinishTreatment_Services,
+  getListPATtreatment_Services,
+  getAllInforDr_Services,
+  createNewHistories_Service,
+  getAllSheduleByDr_Service,
+  getIdDoctorByEmail_Service,
+  getRequestTreat_Service,
+  getConfirmRequest_Service,
+  createTreatmentsPatient_Service
 }

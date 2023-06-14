@@ -154,8 +154,266 @@ let getScheduleDoctor = async (req, res) => {
     })
   }
 }
+let getListDoctorBySpe = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getListDoctorBySpe_Service(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error From getListDoctorBySpe'
+    })
+  }
+}
+
+let getAllSchedulebyDate = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getAllSchedulebyDate_Server(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'ERROR From getAllSchedule'
+    })
+  }
+}
+
+let createNewBooking = async (req, res) => {
+  try {
+    let data = await EmployeeServices.createNewBooking_Service(req.body)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from createNewBooking'
+    })
+  }
+}
+
+let getAllBooking = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getAllBooking_Services(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from getAllBooking'
+    })
+  }
+}
+
+let comfirmBooking = async (req, res) => {
+  try {
+    let data = await EmployeeServices.comfirmBooking_Services(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from comfirmBooking'
+    })
+  }
+}
+
+let getAllPatientBooking = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getAllPatientBooking_Services(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from comfirmBooking'
+    })
+  }
+}
+
+let createNewPatientInfor = async (req, res) => {
+  try {
+    let data = await EmployeeServices.createNewPatientInfor_Services(req.body)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Err from create new InforPatient '
+    })
+  }
+}
+
+let getAllDoctorBySpe = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getAllDoctorBySpe_Services(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Err from getAllDoctorBySpe'
+    })
+  }
+}
+
+let PatientTreatment = async (req, res) => {
+  try {
+    let data = await EmployeeServices.PatientTreatment_Services(req.body)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Err from patient treatment'
+    })
+  }
+}
+
+let getInformations_Patients = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getInformations_Pat_Services(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Err from getInformations_Patients '
+    })
+  }
+}
+
+let getStatusPatient = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getStatusPatient_Services(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Err from getStatusPatient '
+    })
+  }
+}
+
+let FinishTreatment = async (req, res) => {
+  try {
+    let data = await EmployeeServices.FinishTreatment_Services(req.body)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Err from FinishTreatment'
+    })
+  }
+}
+
+let getListPATtreatment = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getListPATtreatment_Services(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Err from getListPATtreatment'
+    })
+  }
+}
+
+let getAllInforDr = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getAllInforDr_Services(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1
+    })
+  }
+}
+
+let CreateHistories = async (req, res) => {
+  try {
+    let data = await EmployeeServices.createNewHistories_Service(req)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(404).json({
+      errCode: -1,
+      errMessage: 'Error from  CreateHistories'
+    })
+  }
+}
+
+let getIdDoctorByEmail = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getIdDoctorByEmail_Service(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from getIdDoctorByEmail'
+    })
+  }
+}
+
+let getAllSheduleByDr = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getAllSheduleByDr_Service(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(404).json({
+      errCode: -1,
+      errMessage: 'Error from getAllSheduleByDr'
+    })
+  }
+}
+
+let getRequestTreat = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getRequestTreat_Service(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from getRequestTreat'
+    })
+  }
+}
+
+let getConfirmRequest = async (req, res) => {
+  try {
+    let data = await EmployeeServices.getConfirmRequest_Service(req.query)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from getConfirmRequest'
+    })
+  }
+}
+
+let createTreatmentsPatient = async (req, res) => {
+  try {
+    let data = await EmployeeServices.createTreatmentsPatient_Service(req.body)
+    return res.status(200).json(data)
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({
+      errCode: -1,
+      errMessage: 'Error from createTreatmentsPatient'
+    })
+  }
+}
 
 export default {
+  getAllSheduleByDr,
   getAllAccounts,
   logginAccout,
   logginAccoutByRoleId,
@@ -167,5 +425,24 @@ export default {
   getInformations_Doctors,
   getAllDoctor,
   createSchedule,
-  getScheduleDoctor
+  getScheduleDoctor,
+  getListDoctorBySpe,
+  getAllSchedulebyDate,
+  createNewBooking,
+  getAllBooking,
+  comfirmBooking,
+  getAllPatientBooking,
+  createNewPatientInfor,
+  getAllDoctorBySpe,
+  PatientTreatment,
+  getInformations_Patients,
+  getStatusPatient,
+  FinishTreatment,
+  getListPATtreatment,
+  getAllInforDr,
+  CreateHistories,
+  getIdDoctorByEmail,
+  getRequestTreat,
+  getConfirmRequest,
+  createTreatmentsPatient
 }

@@ -93,7 +93,11 @@ export class Login extends Component {
       <div className='admin-login-page'>
         <div className='from-container'>
           <div className='form-input'>
-            <p> LOGIN </p>
+            <div style={{ justifyContent: 'center' }}>
+              <p className='title' style={{ fontWeight: 'bold' }}>
+                HỆ THỐNG QUẢN LÝ{' '}
+              </p>
+            </div>
             <div className='input-login'>
               <input
                 className='login__input'
